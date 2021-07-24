@@ -9,11 +9,21 @@ class PushAndPullSokobanEnv(SokobanEnv):
              dim_room=(10, 10),
              max_steps=120,
              num_boxes=3,
-             num_gen_steps=None):
+             num_gen_steps=None,
+             change_reward=False,
+             change_obs=False):
 
-        super(PushAndPullSokobanEnv, self).__init__(dim_room, max_steps, num_boxes, num_gen_steps)
-        screen_height, screen_width = (dim_room[0] * 16, dim_room[1] * 16)
-        self.observation_space = Box(low=0, high=255, shape=(screen_height, screen_width, 3))
+        super(PushAndPullSokobanEnv, self).__init__(dim_room=dim_room, max_steps=max_steps, num_boxes=num_boxes,
+                                                    num_gen_steps=num_gen_steps, reset=True,
+                                                    change_reward=change_reward, change_obs=change_obs)
+
+        if not self.change_obs:
+            screen_height, screen_width = (dim_room[0] * 16, dim_room[1] * 16)
+            self.observation_space = Box(low=0, high=255, shape=(screen_height, screen_width, 3))
+        else:
+            screen_height, screen_width = (dim_room[0], dim_room[1])
+            self.observation_space = Box(low=0, high=7, shape=(screen_height, screen_width))
+
         self.boxes_are_on_target = [False] * num_boxes
         self.action_space = Discrete(len(ACTION_LOOKUP))
         
@@ -41,7 +51,7 @@ class PushAndPullSokobanEnv(SokobanEnv):
         else:
             moved_player, moved_box = self._pull(action)
 
-        self._calc_reward()
+        self._calc_reward(moved_box, moved_player)
 
         done = self._check_if_done()
 
