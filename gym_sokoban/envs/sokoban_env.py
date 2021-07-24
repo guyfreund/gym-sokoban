@@ -17,7 +17,12 @@ class SokobanEnv(gym.Env):
                  max_steps=120,
                  num_boxes=4,
                  num_gen_steps=None,
-                 reset=True):
+                 reset=True,
+                 change_reward=False,
+                 change_obs=False):
+
+        self.change_reward = change_reward
+        self.change_obs = change_obs
 
         # General Configuration
         self.dim_room = dim_room
@@ -36,12 +41,21 @@ class SokobanEnv(gym.Env):
         self.reward_finished = 10
         self.reward_last = 0
 
+        if self.change_reward:
+            self.penalty_invalid_move = -1
+            self.penalty_irreversible_move = -10
+
         # Other Settings
         self.viewer = None
         self.max_steps = max_steps
         self.action_space = Discrete(len(ACTION_LOOKUP))
-        screen_height, screen_width = (dim_room[0] * 16, dim_room[1] * 16)
-        self.observation_space = Box(low=0, high=255, shape=(screen_height, screen_width, 3), dtype=np.uint8)
+
+        if not self.change_obs:
+            screen_height, screen_width = (dim_room[0] * 16, dim_room[1] * 16)
+            self.observation_space = Box(low=0, high=255, shape=(screen_height, screen_width, 3), dtype=np.uint8)
+        else:
+            screen_height, screen_width = (dim_room[0], dim_room[1])
+            self.observation_space = Box(low=0, high=7, shape=(screen_height, screen_width), dtype=np.uint8)
         
         if reset:
             # Initialize Room
@@ -72,7 +86,7 @@ class SokobanEnv(gym.Env):
         else:
             moved_player = self._move(action)
 
-        self._calc_reward()
+        self._calc_reward(moved_box, moved_player)
         
         done = self._check_if_done()
 
@@ -154,7 +168,7 @@ class SokobanEnv(gym.Env):
 
         return False
 
-    def _calc_reward(self):
+    def _calc_reward(self, moved_box=False, moved_player=False):
         """
         Calculate Reward Based on
         :return:
@@ -177,7 +191,10 @@ class SokobanEnv(gym.Env):
             self.reward_last += self.reward_box_on_target
         elif current_boxes_on_target < self.boxes_on_target:
             self.reward_last += self.penalty_box_off_target
-        
+
+        if self.change_reward and not moved_box and not moved_player:
+            self.reward_last += self.penalty_invalid_move
+
         game_won = self._check_if_all_boxes_on_target()        
         if game_won:
             self.reward_last += self.reward_finished
@@ -248,9 +265,9 @@ class SokobanEnv(gym.Env):
     def get_image(self, mode, scale=1):
         
         if mode.startswith('tiny_'):
-            img = room_to_tiny_world_rgb(self.room_state, self.room_fixed, scale=scale)
+            img = room_to_tiny_world_rgb(self.room_state, self.room_fixed, scale=scale, change_obs=self.change_obs)
         else:
-            img = room_to_rgb(self.room_state, self.room_fixed)
+            img = room_to_rgb(self.room_state, self.room_fixed, change_obs=self.change_obs)
 
         return img
 
