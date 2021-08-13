@@ -182,13 +182,13 @@ class PushAndPull_Env_v2(PushAndPullSokobanEnv):
             num_gen_steps=50
         )
 
-class PushAndPull_Env_v3(PushAndPullSokobanEnv):
+class PushAndPull_Env_v6(PushAndPullSokobanEnv):
     metadata = {
         'render.modes': ['human', 'rgb_array', 'tiny_human', 'tiny_rgb_array'],
     }
 
     def __init__(self):
-        super(PushAndPull_Env_v2, self).__init__(
+        super(PushAndPull_Env_v6, self).__init__(
             dim_room=(7, 7), max_steps=150, num_boxes=1,
             num_gen_steps=50
         )
@@ -371,7 +371,7 @@ class ReversePushAndPull_Env_v2(ReversePushAndPullSokobanEnv):
     }
 
     def __init__(self):
-        super(ReversePushAndPull_Env_v0, self).__init__(
+        super(ReversePushAndPull_Env_v2, self).__init__(
             dim_room=(7, 7), max_steps=150, num_boxes=2,
             num_gen_steps=50, change_reward=True
         )
